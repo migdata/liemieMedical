@@ -1,1 +1,5 @@
-/build
+node_modules/
+.expo/
+android/build/
+ios/build/
+.env
