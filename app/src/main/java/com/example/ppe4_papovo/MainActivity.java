@@ -29,6 +29,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import androidx.core.app.ActivityCompat;
+import androidx.annotation.NonNull;
+import android.os.Build;
+import android.provider.Settings;
+import android.view.WindowManager;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -37,28 +41,117 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private Menu lemenu;
 
-    // appelation des permissions declarés dans le manifest
+    // Déclaration des constantes et variables
     private String[] permissions = {
             Manifest.permission.INTERNET,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-
-   /* private String[] permissions = {
-            Manifest.permission.INTERNET,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_WIFI_STATE
     };
 
-    */
+    private static final int MULTIPLE_PERMISSIONS = 10;
+    public static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469;
+    private boolean permissionOverlayAsked = false;
+    private boolean permissionOK = false;
 
-    private Static final int PERMISSION_ALL = 10;
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // super.onResume() n'a rien à faire ici, onStart suffit
+        if (!permissionOverlayAsked) {
+            checkPermissionAlert();
+        }
+        checkPermissions(); // Correction du nom de la méthode
+    }
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            List<String> listPermissionsNeeded = new ArrayList<>();
+            for (String p : permissions) {
+                if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {
+                    listPermissionsNeeded.add(p);
+                }
+            }
+            if (!listPermissionsNeeded.isEmpty()) {
+                permissionOK = false;
+                ActivityCompat.requestPermissions(this,
+                        listPermissionsNeeded.toArray(new String[0]), MULTIPLE_PERMISSIONS);
+            } else {
+                permissionOK = true;
+            }
+        } else {
+            permissionOK = true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissionsList, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissionsList, grantResults);
+        if (requestCode == MULTIPLE_PERMISSIONS) {
+            if (grantResults.length > 0) {
+                StringBuilder permissionsDenied = new StringBuilder();
+                for (int i = 0; i < permissionsList.length; i++) {
+                    if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                        permissionsDenied.append("\n").append(permissionsList[i]);
+                    }
+                }
+
+                if (permissionsDenied.length() > 0) {
+                    permissionOK = false;
+                    Toast.makeText(getApplicationContext(),
+                            "Permissions nécessaires pour continuer :" + permissionsDenied.toString(),
+                            Toast.LENGTH_LONG).show();
+                } else {
+                    permissionOK = true;
+                }
+            }
+        }
+    }
+
+    public void checkPermissionAlert() {
+        permissionOverlayAsked = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+                    alertmsg("Permission ALERT", "Permission OK");
+                } else {
+                    Toast.makeText(this, "Pbs demande de permissions (Alert Message)", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    public void alertmsg(String title, String msg) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(msg)
+                .setTitle(title)
+                .setPositiveButton("OK", null);
+
+        AlertDialog dialog = builder.create();
+
+        // Paramétrage pour l'overlay selon la version d'Android
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Settings.canDrawOverlays(this)) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+                } else {
+                    dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                }
+            }
+        }
+        dialog.show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,13 +218,18 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.menu_connect){
             // verif du frag actif
 
-            boolean isActive = (Navigation.findNavController(this, R.id.nav_host_fragment_content_main).getCurrentDestination().getId() == R.id.FirstFragment);
-            if (isActive){
-                Navigation.findNavController(this, R.id.nav_host_fragment_content_main).navigate(R.id.action_FirstFragment_to_SecondFragment);
+            if (!permissionOK){
+                // pourquoi ça bloque
+               alertmsg("Permission manquantes", "Permission non accordée");
+               checkPermissions(); // on relance la vérification des permissions
             }
-            else {
-                Toast.makeText(this, "Vous etes sur la page de connexion", Toast.LENGTH_SHORT).show();
+            else{
+                boolean isFirstFrag = (Navigation.findNavController(this, R.id.nav_host_fragment_content_main).getCurrentDestination().getId() == R.id.FirstFragment);
+                if (isFirstFrag){
+                    Navigation.findNavController(this, R.id.nav_host_fragment_content_main).navigate(R.id.action_FirstFragment_to_SecondFragment);
+                }
             }
+
             return true;
         }
         if (id == R.id.menu_list){
@@ -141,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Clic sur import", Toast.LENGTH_SHORT).show();
         }
         if (id == R.id.menu_deconnect){
-            // verif que l'actif est bien frag 3 ( bienvneu )
+            // verif que l'actif est bien frag 3 ( bienvenue )
 
             boolean isThirdActive = (Navigation.findNavController(this, R.id.nav_host_fragment_content_main).getCurrentDestination().getId() == R.id.ThirdFragment);
             if (isThirdActive){
