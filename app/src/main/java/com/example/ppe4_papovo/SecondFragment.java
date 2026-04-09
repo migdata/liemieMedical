@@ -13,10 +13,18 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.ppe4_papovo.databinding.FragmentSecondBinding;
 import android.widget.Toast;
+import android.widget.EditText;
 
 public class SecondFragment extends Fragment {
 
+    // Variables demandées pour le Web Service
+    private Async mThreadCon = null;
+    private EditText login; //  etFragId dans le XML
+    private EditText pass;  // etFragPassword dans le XML
+    private String url;
+    private String[] mesparams;
     private FragmentSecondBinding binding;
+
 
     @Override
     public View onCreateView(
@@ -31,6 +39,9 @@ public class SecondFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        login = view.findViewById(R.id.etFragId);
+        pass = view.findViewById(R.id.etFragPassword);
+
         Button btnOk = view.findViewById(R.id.bFragOk);
         Button btnCancel = view.findViewById(R.id.bFragCancel);
 
@@ -42,10 +53,31 @@ public class SecondFragment extends Fragment {
 
         // nav vers frag 3
         btnOk.setOnClickListener(v ->{
-            ((MainActivity)getActivity()).menuConnecte();
-            Navigation.findNavController(v).navigate(R.id.action_SecondFragment_to_ThirdFragment);
-            Toast.makeText(getContext(), "Connexion reussie", Toast.LENGTH_SHORT).show();
-        });
+            // recup des saisies
+            String loginSaisi = login.getText().toString();
+            String passSaisi = pass.getText().toString();
+
+            if(!loginSaisi.isEmpty() && !passSaisi.isEmpty()){
+                url = "https://www.btssio-carcouet.fr/ppe4/public/connect2/"
+                        + loginSaisi + "/" + passSaisi + "/infirmiere";
+
+                // preparation des parametres pour Async
+
+                mesparams = new String[3];
+                mesparams[0] = "1"; // numAppel dans Async pour savoir quel thread on traite
+                mesparams[1] = url; // l'adresse
+                mesparams[2] = "GET"; // type de la requete
+
+                // execution du thread
+
+                mThreadCon = new Async((MainActivity)getActivity());
+                mThreadCon.execute(mesparams);
+            }
+            else {
+                Toast.makeText(getContext(), "Saisie incorrecte", Toast.LENGTH_SHORT).show();
+            }
+
+            });
 
        /* binding.buttonSecond.setOnClickListener(v ->
                 NavHostFragment.findNavController(SecondFragment.this)

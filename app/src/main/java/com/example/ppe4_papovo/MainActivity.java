@@ -33,6 +33,9 @@ import androidx.annotation.NonNull;
 import android.os.Build;
 import android.provider.Settings;
 import android.view.WindowManager;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -42,23 +45,34 @@ public class MainActivity extends AppCompatActivity {
     private Menu lemenu;
 
     // Déclaration des constantes et variables
-    private String[] permissions = {
-            Manifest.permission.INTERNET,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-    };
-
+    //private String[] permissions = { Manifest.permission.INTERNET,Manifest.permission.READ_CONTACTS};
+    private String[] permissions = { Manifest.permission.INTERNET,Manifest.permission.READ_CONTACTS,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_WIFI_STATE,Manifest.permission.ACCESS_NETWORK_STATE};
     private static final int MULTIPLE_PERMISSIONS = 10;
     public static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469;
     private boolean permissionOverlayAsked = false;
     private boolean permissionOK = false;
+    private  String nomInfimiere;
+    private String prenomInfimiere;
+
+    public String getPrenom() {
+        return prenomInfimiere;
+    }
+
+    public String getNom() {
+        return nomInfimiere;
+    }
+
+
+
+
 
     @Override
     protected void onStart() {
         super.onStart();
         // super.onResume() n'a rien à faire ici, onStart suffit
-        if (!permissionOverlayAsked) {
+        if (!permissionOverlayAsked && !Settings.canDrawOverlays(this)) {
             checkPermissionAlert();
+            permissionOverlayAsked= true;
         }
         checkPermissions(); // Correction du nom de la méthode
     }
@@ -124,15 +138,16 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(this)) {
-                    alertmsg("Permission ALERT", "Permission OK");
+                    alertmsg("Permission ALERT", "Permission d'affichage activé");
                 } else {
-                    Toast.makeText(this, "Pbs demande de permissions (Alert Message)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Pbs l'affichage est desactivé", Toast.LENGTH_SHORT).show();
                 }
             }
         }
     }
 
     public void alertmsg(String title, String msg) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(msg)
                 .setTitle(title)
@@ -151,6 +166,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         dialog.show();
+    }
+
+    // methode declenchée quand le serveur répond
+
+    public void retourConnexion(StringBuilder sb) {
+        // sb contient tout le json renvoyé par le site web
+        // analyser le json reçu via Gson
+        //JsonElement root
+        alertmsg("retour connexion ", sb.toString());
     }
 
     @Override
