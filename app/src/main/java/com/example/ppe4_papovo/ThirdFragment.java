@@ -7,6 +7,9 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -61,4 +64,27 @@ public class ThirdFragment extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_third, container, false);
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // recup de element parent
+
+        MainActivity activity = (MainActivity) getActivity();
+
+        if(activity != null ) {
+            // recup des donnes du frag 3.xml
+
+            TextView lNomInfirmiere = view.findViewById(R.id.textView2);
+            TextView lPrenomInfirmiere = view.findViewById(R.id.textView3);
+
+            // recup des valeurs des getters
+
+            lNomInfirmiere.setText("nom:"+ activity.getNomInfimiere());
+            lPrenomInfirmiere.setText("prenom:"+ activity.getPrenomInfimiere());
+        }
+
+    }
+
 }

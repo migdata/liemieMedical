@@ -6,6 +6,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.View;
 
 import androidx.navigation.NavController;
@@ -36,6 +37,11 @@ import android.view.WindowManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonObject;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -54,17 +60,13 @@ public class MainActivity extends AppCompatActivity {
     private  String nomInfimiere;
     private String prenomInfimiere;
 
-    public String getPrenom() {
+    public String getPrenomInfimiere() {
         return prenomInfimiere;
     }
 
-    public String getNom() {
+    public String getNomInfimiere() {
         return nomInfimiere;
     }
-
-
-
-
 
     @Override
     protected void onStart() {
@@ -174,7 +176,36 @@ public class MainActivity extends AppCompatActivity {
         // sb contient tout le json renvoyé par le site web
         // analyser le json reçu via Gson
         //JsonElement root
-        alertmsg("retour connexion ", sb.toString());
+        //alertmsg("retour connexion ", sb.toString()); // je recupère toutes les données en format json
+
+        try {
+
+            JsonElement root = JsonParser.parseString(sb.toString());
+            JsonObject jsonObject = root.getAsJsonObject();
+
+            // verif de la clé
+
+            if (jsonObject.has("status")) {
+                alertmsg("erreur d'authentification", "Echec de connexion ");
+            } else {
+                // on recupere les données mais avant on vérifie
+                if (jsonObject.has("nom") && jsonObject.has("prenom")) {
+                    this.nomInfimiere = jsonObject.get("nom").getAsString();
+                    this.prenomInfimiere = jsonObject.get("prenom").getAsString();
+                    Log.d("DONNES", "nom : " + this.nomInfimiere + " prenom : " + this.prenomInfimiere);
+                }
+
+
+                // Dans ce cas on lui donne l'acces à au fragment 3
+                menuConnecte();
+                Navigation.findNavController(this, R.id.nav_host_fragment_content_main)
+                        .navigate(R.id.action_SecondFragment_to_ThirdFragment);
+            }
+        }
+        catch (Exception e) {
+            Log.e("Erreur de données", "Erreur de données " + e.getMessage());
+            alertmsg("Erreur de données ", "le serveur ne repond pas ");
+        }
     }
 
     @Override
