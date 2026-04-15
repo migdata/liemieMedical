@@ -1,5 +1,6 @@
 package com.example.ppe4_papovo;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -23,6 +24,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import android.Manifest;
 import android.content.pm.PackageManager;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.ArrayList;
 import android.app.AlertDialog;
@@ -59,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean permissionOK = false;
     private  String nomInfimiere;
     private String prenomInfimiere;
+
+    private String currentIdSaisi;
+    private String currentMotDePasseSaisi;
 
     public String getPrenomInfimiere() {
         return prenomInfimiere;
@@ -178,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
         //JsonElement root
         //alertmsg("retour connexion ", sb.toString()); // je recupère toutes les données en format json
 
+
         try {
 
             JsonElement root = JsonParser.parseString(sb.toString());
@@ -192,7 +200,22 @@ public class MainActivity extends AppCompatActivity {
                 if (jsonObject.has("nom") && jsonObject.has("prenom")) {
                     this.nomInfimiere = jsonObject.get("nom").getAsString();
                     this.prenomInfimiere = jsonObject.get("prenom").getAsString();
-                    Log.d("DONNES", "nom : " + this.nomInfimiere + " prenom : " + this.prenomInfimiere);
+                   // Log.d("DONNES", "nom : " + this.nomInfimiere + " prenom : " + this.prenomInfimiere);
+                   if(currentIdSaisi != null && currentMotDePasseSaisi != null) {
+                       // ecriture des données dans les shared preferences
+                       SharedPreferences sp = getSharedPreferences("Mes Prefs", MODE_PRIVATE);
+                       SharedPreferences.Editor editor = sp.edit();
+                       editor.putString("DernierId",currentIdSaisi);
+                       editor.putString("DernierMotDePasse", securiteKeyMD5(currentMotDePasseSaisi));
+                       editor.putString("DernierNom", this.nomInfimiere);
+                       editor.putString("DernierPrenom", this.prenomInfimiere);
+                       editor.apply();
+                   }
+                   else {
+                       Log.e("DEBUG", " les variables sont nulles  ");
+                   }
+
+
                 }
 
 
@@ -203,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         catch (Exception e) {
-            Log.e("Erreur de données", "Erreur de données " + e.getMessage());
+           // Log.e("Erreur de données", "Erreur de données " + e.getMessage());
             alertmsg("Erreur de données ", "le serveur ne repond pas ");
         }
     }
@@ -317,6 +340,70 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // fonction de hachage MD5
+    public static String securiteKeyMD5(String s) {
+        try{
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] array = md.digest(s.getBytes());
+            BigInteger bi = new BigInteger(1, array);
+
+            String hashText = bi.toString(16);
+            while (hashText.length() < 32) {
+                hashText = "0" + hashText;
+            }
+            return hashText;
+        }
+        catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // testMotDePasse
+    public void testMotDePasse(String vid, String vmotDePasse) {
+
+        // dans un premier temps il faut stocker dans la mémoire la saisie de l'user
+        this.currentIdSaisi = vid;
+        this.currentMotDePasseSaisi = vmotDePasse;
+        // on récupère les données stockées
+        SharedPreferences sp = getSharedPreferences("Mes Prefs", MODE_PRIVATE);
+        String mesIdStocker = sp.getString("DernierId", "");
+        String mesMotDePasseStocker = sp.getString("DernierMotDePasse", "");
+
+        // on hash le mdp saisi
+        String mdpSaisiHash = securiteKeyMD5(vmotDePasse);
+
+        Log.d("Authentification", "mdp saisi hash : " + mdpSaisiHash);
+
+        // verif local des données
+
+        if(vid.equals(mesIdStocker) && mdpSaisiHash.equals(mesMotDePasseStocker)){
+            Log.d("Authentification", "Connexion reussi avec shared preferences");
+
+            // on recupère aussi le nom et prenom stockés pour le fragment 3
+            this.nomInfimiere = sp.getString("DernierNom", "");
+            this.prenomInfimiere = sp.getString("DernierPrenom", "");
+
+            menuConnecte();
+            Navigation.findNavController(this, R.id.nav_host_fragment_content_main)
+                    .navigate(R.id.action_SecondFragment_to_ThirdFragment);
+        }
+        else{
+            // si pas de correspondance , on appelle la méthode de connexion avec le serveur ( webService)
+            Log.d("Authentification", "les identifiants ne correspondent pas à ceux de shared preferences");
+            String url = "https://www.btssio-carcouet.fr/ppe4/public/connect2/"
+                    + vid + "/" + vmotDePasse + "/infirmiere";
+
+            String [] mesparams = new String[3];
+            mesparams[0] = "1";
+            mesparams[1] = url;
+            mesparams[2] = "GET";
+
+            Async mThreadCon = new Async(this);
+            mThreadCon.execute(mesparams);
+
+        }
+
+    }
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);

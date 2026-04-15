@@ -58,20 +58,10 @@ public class SecondFragment extends Fragment {
             String passSaisi = pass.getText().toString();
 
             if(!loginSaisi.isEmpty() && !passSaisi.isEmpty()){
-                url = "https://www.btssio-carcouet.fr/ppe4/public/connect2/"
-                        + loginSaisi + "/" + passSaisi + "/infirmiere";
-
-                // preparation des parametres pour Async
-
-                mesparams = new String[3];
-                mesparams[0] = "1"; // numAppel dans Async pour savoir quel thread on traite
-                mesparams[1] = url; // l'adresse
-                mesparams[2] = "GET"; // type de la requete
-
-                // execution du thread
-
-                mThreadCon = new Async((MainActivity)getActivity());
-                mThreadCon.execute(mesparams);
+               MainActivity activity = (MainActivity) getActivity();
+               if(activity != null){
+                   activity.testMotDePasse(loginSaisi, passSaisi);
+               }
             }
             else {
                 Toast.makeText(getContext(), "Saisie incorrecte", Toast.LENGTH_SHORT).show();
