@@ -312,6 +312,10 @@ public class MainActivity extends AppCompatActivity {
         }
         if (id == R.id.menu_list){
             Toast.makeText(this, "Clic sur liste", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, AfficheListeVisite.class);
+            startActivity(intent);
+            return true;
+
         }
         if (id == R.id.menu_export){
             Toast.makeText(this, "Clic sur import", Toast.LENGTH_SHORT).show();
@@ -334,6 +338,14 @@ public class MainActivity extends AppCompatActivity {
         }
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            return true;
+        }
+
+        if (id == R.id.menu_import){
+            Intent intent = new Intent(this, ActImport.class);
+            //on met en attente la réponse de l'activité
+            intent.putExtra("permissionOverlayOk", this.permissionOK);  // on envoie la permission d'affichage
+            startActivity(intent);
             return true;
         }
 

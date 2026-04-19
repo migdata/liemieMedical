@@ -47,8 +47,13 @@ public class Async extends AsyncTask<String, String, Boolean> {
                 if (numAppel==1) {
                     ((MainActivity) activityAppelante.get()).retourConnexion(stringBuilder);
                 }
+                else {
+                    if (numAppel == 2) {
+                        ((ActImport) activityAppelante.get()).retourImport(stringBuilder);
+                    }
+                }
             } else
-                Toast.makeText(activityAppelante.get(), "Fin ko",
+                Toast.makeText(activityAppelante.get(), "Echec de l'appel serveur",
                         Toast.LENGTH_SHORT).show();
         }
     }
@@ -64,6 +69,8 @@ public class Async extends AsyncTask<String, String, Boolean> {
         try {
             URL url = new URL(urlAppelee);
             urlConnection = (HttpURLConnection) url.openConnection();
+
+
 
             if (typeAppel.equals("POST")) {
                 urlConnection
