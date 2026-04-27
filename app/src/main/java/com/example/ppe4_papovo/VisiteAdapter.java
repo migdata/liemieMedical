@@ -16,6 +16,8 @@ public class VisiteAdapter extends BaseAdapter {
     private LayoutInflater layoutInflater; //Cet attribut a pour mission de charger notre fichier XML de la vue pour l'item.
 
     private DateFormat df = new DateFormat();
+    private Context context;
+    private Modele vmodele;
 
     private class ViewHolder {
         TextView textViewVisite;
@@ -42,11 +44,11 @@ public class VisiteAdapter extends BaseAdapter {
 
     public VisiteAdapter(Context context, List<Visite> vListVisite) {
         super();
+        this.context = context;
+        this.vmodele = new Modele(context);
         layoutInflater = LayoutInflater.from(context);
         listVisite = vListVisite;
     }
-
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
@@ -71,9 +73,19 @@ public class VisiteAdapter extends BaseAdapter {
         } else {
             convertView.setBackgroundColor(Color.rgb(255, 255, 255));
         }
-        /*****Affichage des propriétés dans la ligne de la listView ****/
+
+        // recup visite
+        Visite uneVisite = listVisite.get(position);
+        Patient lpatient = vmodele.trouvePatient(uneVisite.getPatient());
+
+        /**** Affichage des propriétés dans la ligne de la listView ****/
         holder.textViewVisite.setText("Visite ID : " + listVisite.get(position).getId() + ", ");
-        holder.textViewPatient.setText("Avec le patient : " + listVisite.get(position).getPatient() + ", ");
+        if (lpatient != null) {
+            holder.textViewPatient.setText("Avec le patient : " + lpatient.getNom() + " " + lpatient.getPrenom() + ", ");
+        }
+        else {
+            holder.textViewPatient.setText("Avec le patient : " + listVisite.get(position).getPatient() + ", ");
+        }
         holder.textViewDate.setText("Date :"+ df.format("dd/MM/yyyy",listVisite.get(position).getDate_reelle()).toString().concat(" à ").concat(df.format("HH:mm",listVisite.get(position).getDate_reelle()).toString()));
         holder.textViewDuree.setText("Durée : "+listVisite.get(position).getDuree()+" min");
 
@@ -83,17 +95,11 @@ public class VisiteAdapter extends BaseAdapter {
         holder.textViewDate.setTextColor(Color.BLACK);
         holder.textViewDuree.setTextColor(Color.BLACK);
 
-
         /******* Taille du texte de la listView ********************/
         holder.textViewVisite.setTextSize(17);
         holder.textViewPatient.setTextSize(17);
         holder.textViewDate.setTextSize(17);
         holder.textViewDuree.setTextSize(17);
-
-
         return convertView;
     }
-
-
-
 }

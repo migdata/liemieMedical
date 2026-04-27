@@ -51,6 +51,12 @@ public class Async extends AsyncTask<String, String, Boolean> {
                     if (numAppel == 2) {
                         ((ActImport) activityAppelante.get()).retourImport(stringBuilder);
                     }
+                    else {
+                        if (numAppel == 3) {
+                            ((ActImport) activityAppelante.get()).retourImportPatient(stringBuilder);
+                        }
+                    }
+
                 }
             } else
                 Toast.makeText(activityAppelante.get(), "Echec de l'appel serveur",
