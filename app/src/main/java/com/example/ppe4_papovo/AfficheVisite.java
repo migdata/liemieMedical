@@ -2,6 +2,7 @@ package com.example.ppe4_papovo;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -83,6 +84,14 @@ public class AfficheVisite extends AppCompatActivity {
         // 3. Remplissage des champs (Patient/Visite)
         remplirChamps();
 
+        // 4. Chargement et affichage de la liste des soins
+        listeSoin = vmodel.trouveSoinsUneVisite(laVisite.getId());
+        Log.d("Soins", "trouveSoinsUneVisite : " + String.valueOf(listeSoin.size()));
+
+        listView = (ListView) findViewById(R.id.lvListeSoins);
+        SoinAdapter soinAdapter = new SoinAdapter(this, listeSoin);
+        listView.setAdapter(soinAdapter);
+
         // 4. Bouton Save
         Button btnSave = findViewById(R.id.visitesave);
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -146,6 +155,7 @@ public class AfficheVisite extends AppCompatActivity {
         }
         catch (Exception e )
         {
+            Log.e("AfficheVisite", "Erreur sauvegarde : " + e.getMessage());
             Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_SHORT).show();
         }
     }
