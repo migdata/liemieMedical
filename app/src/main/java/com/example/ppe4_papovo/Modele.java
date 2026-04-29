@@ -21,11 +21,17 @@ public class Modele {
     // ouverture de la base de données ( mon import de Db40 dans le libs
     public void open() {
 
-        db4oFileName = appDir.getAbsolutePath()
-                + "/BasePPE4.db4o";
-        dataBase = Db4oEmbedded.openFile(Db4oEmbedded.newConfiguration(),
-                db4oFileName);
+        try {
+            db4oFileName = appDir.getAbsolutePath() + "/BasePPE4.db4o";
+            // On vérifie si dataBase n'est pas déjà ouvert et actif
+            if (dataBase == null || dataBase.ext().isClosed()) {
+                dataBase = Db4oEmbedded.openFile(Db4oEmbedded.newConfiguration(), db4oFileName);
+            }
+        } catch (Exception e) {
+            Log.e("Modele", "Erreur critique ouverture base : " + e.getMessage());
+        }
     }
+
 
 
     // construction de la base de données || initialisation de l'environnement de stockage sinon creation de la base
@@ -175,23 +181,24 @@ public class Modele {
     // trouveSoin retourne le soin à partir de sa clé (3 int passés en paramètre
     public Soin trouveSoin(int id_categ_soins, int id_type_soins, int id) {
         open();
-        Soin vretour = new Soin();
-        vretour.setId_categ_soins(id_categ_soins);
-        vretour.setId_type_soins(id_type_soins);
-        vretour.setId(id);
-        ObjectSet<Soin> result = dataBase.queryByExample(vretour);
-        if(result.size()==0) {
-            Log.d("Soins", "Recherche soins introuvable" + String.valueOf(vretour.getId_categ_soins()) + "/" + String.valueOf(vretour.getId_type_soins()) + "/" + String.valueOf(vretour.getId()));
+        Soin critere = new Soin();
+        critere.setId_categ_soins(id_categ_soins);
+        critere.setId_type_soins(id_type_soins);
+        critere.setId(id);
+
+        ObjectSet<Soin> result = dataBase.queryByExample(critere);
+        Soin vretour = null;
+
+        if (result.hasNext()) {
+            vretour = (Soin) result.next();
+            Log.d("Soins", "Recherche soins ok");
+        } else {
+            Log.d("Soins", "Recherche soins introuvable : " + id_categ_soins + "/" + id_type_soins + "/" + id);
         }
-        else
-        {
-            Log.d("Soins", "Recherche soins ok" + String.valueOf(vretour.getId_categ_soins()) + "/" + String.valueOf(vretour.getId_type_soins()) + "/" + String.valueOf(vretour.getId()));
-        }
-        vretour = (Soin) result.next();
+
         dataBase.close();
         return vretour;
     }
-
     // deleteSoin() qui permet de supprimer toutes les instances de la classe Soin
     public void deleteSoin() {
         open();
@@ -287,11 +294,15 @@ public class Modele {
     }
     // addVisiteSoin(ArrayList<VisiteSoin> vVisiteSoin) qui, à partir d'une collection de VisiteSoin, va les ajouter à DB4o. Nous ne testerons pas l'existence de ces objets puisque c'est une création (appel de la méthode après l'appel de deleteVisiteSoin()).
     public void addVisiteSoin(ArrayList<VisiteSoin> vVisiteSoin) {
-        open();
-        for (VisiteSoin v : vVisiteSoin) {
-            dataBase.store(v);
+        open(); //
+        try {
+            for (VisiteSoin v : vVisiteSoin) {
+                dataBase.store(v); //
+            }
+            dataBase.commit(); // FORCE l'écriture physique sur le stockage
+        } finally {
+            dataBase.close(); //
         }
-        dataBase.close();
     }
 
 

@@ -27,13 +27,36 @@ import java.util.ArrayList;
 import java.util.Date;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.lang.reflect.Type;
 
 
 
+class BooleanTypeAdapter implements JsonDeserializer<Boolean> {
+    public Boolean deserialize(JsonElement json, Type typeOfT,
+                               JsonDeserializationContext context) throws JsonParseException {
+        if (((JsonPrimitive) json).isBoolean()) {
+            return json.getAsBoolean();
+        }
+        if (((JsonPrimitive) json).isString()) {
+            String jsonValue = json.getAsString();
+            if (jsonValue.equalsIgnoreCase("true")) {
+                return true;
+            } else if (jsonValue.equalsIgnoreCase("false")) {
+                return false;
+            } else {
+                return null;
+            }
+        }
 
+        int code = json.getAsInt();
+        return code == 0 ? false :
+                code == 1 ? true : null;
+    }
+}
 
 public class ActImport extends AppCompatActivity {
 
@@ -109,8 +132,11 @@ public class ActImport extends AppCompatActivity {
             // on parse les données avec le modele
             Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
             ArrayList<Visite> listeVisite = new ArrayList<Visite>();
-
             ArrayList<Integer> lesPatients = new ArrayList<Integer>();
+            // on nettoie la base de données
+            vmodel.deleteVisite();
+            vmodel.deletePatient();
+            vmodel.deleteVisiteSoin();
             for (JsonElement obj : varray) {
                 Visite visite = gson.fromJson(obj.getAsJsonObject(), Visite.class);
 
@@ -130,8 +156,7 @@ public class ActImport extends AppCompatActivity {
                 visite.setDate_reelle(visite.getDate_prevue());
                 listeVisite.add(visite);
             }
-            vmodel.deleteVisite(); // on supprime les visites existantes pour eviter les doublons
-            vmodel.deletePatient(); // on supprime les patients existants pour eviter les doublons
+
             vmodel.addVisite(listeVisite); // on insère les visites du json dans la base
 
             // On boucle sur les IDs uniques pour récupérer les détails de chaque patient
@@ -187,18 +212,23 @@ public class ActImport extends AppCompatActivity {
     public void retourImportSoinsVisite(StringBuilder sb) {
         try {
             Modele vmodel = new Modele(this);
-            JsonElement json = new JsonParser().parse(sb.toString());
+            JsonElement json = JsonParser.parseString(sb.toString()); // Utilisation de parseString (plus moderne)
             JsonArray varray = json.getAsJsonArray();
-            Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").serializeNulls().create();
-
-
+            //Gson gson = new GsonBuilder().serializeNulls().create();
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(boolean.class, new BooleanTypeAdapter());
+            Gson gson = builder.create();
             ArrayList<VisiteSoin> lvs = new ArrayList<VisiteSoin>();
             for (JsonElement obj : varray) {
-                lvs.add(gson.fromJson(obj.getAsJsonObject(), VisiteSoin.class));
+                VisiteSoin vs = gson.fromJson(obj.getAsJsonObject(), VisiteSoin.class);
+                // On s'assure que par défaut le soin n'est pas fait au moment de l'import
+                // vs.setRealise(false);
+                lvs.add(vs);
             }
             vmodel.addVisiteSoin(lvs);
-        } catch (JsonParseException e) {
-            Log.d("VisiteSoin", "erreur json " + e.getMessage());
+            Log.d("VisiteSoin", "Import de " + lvs.size() + " soins de visite réussi.");
+        } catch (Exception e) {
+            Log.d("VisiteSoin", "Erreur import : " + e.getMessage());
         }
     }
 

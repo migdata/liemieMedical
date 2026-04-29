@@ -75,7 +75,7 @@ public class SoinAdapter extends android.widget.BaseAdapter {
         VisiteSoin soin = listSoin.get(position);
 
         // Remplissage des vues avec les données du soin
-        holder.textLibelle.setText(soin.getId_categ_soins());
+        holder.textLibelle.setText("Soin n° " + soin.getId_soins());
         holder.checkRealise.setChecked(soin.isRealise());
 
         // Couleur de fond alternée pour améliorer la lisibilité

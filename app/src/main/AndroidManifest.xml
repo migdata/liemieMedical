@@ -22,10 +22,15 @@
         android:theme="@style/Theme.PPE4PAPOVO"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+        <activity
+            android:name=".Map"
+            android:exported="false"
+            android:hardwareAccelerated="false" />
         <activity
             android:name=".AfficheVisite"
-            android:parentActivityName=".MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
         <activity
             android:name=".AfficheListeVisite"
             android:exported="false" />

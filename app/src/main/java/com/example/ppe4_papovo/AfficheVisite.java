@@ -1,6 +1,7 @@
 package com.example.ppe4_papovo;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -68,7 +69,10 @@ public class AfficheVisite extends AppCompatActivity {
                 datereelle.setText(sdf.format(myCalendar.getTime()));
                 ddatereelle = myCalendar.getTime();
             }
+
+            // Bouton Map : o, lance l'activité Map avec l'adresse du patient
         };
+
 
         // Ouverture du calendrier au clic sur l'EditText
         datereelle.setOnClickListener(new View.OnClickListener() {
@@ -100,8 +104,25 @@ public class AfficheVisite extends AppCompatActivity {
                 sauvegarder();
             }
         });
-    }
 
+        // 6. Bouton Map : lance l'activité Map avec l'adresse du patient
+        Button btnMap = findViewById(R.id.visitemap);
+        btnMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Patient p = vmodel.trouvePatient(laVisite.getPatient());
+                if (p != null) {
+                    Intent intent = new Intent(AfficheVisite.this, Map.class);
+                    intent.putExtra("idVisite", laVisite.getId());
+                    intent.putExtra("adresse",
+                            p.getAd1() + " " + p.getCp() + " " + p.getVille() + " FRANCE");
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(AfficheVisite.this, "Patient introuvable", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
     private void remplirChamps() {
         Patient lePatient = vmodel.trouvePatient(laVisite.getPatient());
 
@@ -158,5 +179,5 @@ public class AfficheVisite extends AppCompatActivity {
             Log.e("AfficheVisite", "Erreur sauvegarde : " + e.getMessage());
             Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_SHORT).show();
         }
-    }
+    };
 }

@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation("com.google.code.gson:gson:2.9.1")
     implementation(files("libs\\db4o-8.0.276.16149-all-java5.jar"))
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation(libs.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
